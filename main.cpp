@@ -7,17 +7,34 @@
 
 #include <iostream>
 #include <vector>
+#include <numeric>
 using namespace std;
+void printVector(const vector<int>& vec){
+    for (const int& elem : vec) {
+        cout << elem << " ";
+    }
+    cout << endl;
+}
+int sumVector(const vector<int>& vec){
+    return accumulate(vec.begin(), vec.end(), 0);;
+}
 int main(int argc, const char * argv[]) {
     // insert code here...
-    cout << "Hello, World!\n";
-    vector<int> vec = {1,2,3,4};
-    vec.push_back(5);
-    int sum = 0;
-    for (int i=0; i<vec.size(); i++) {
-        cout << vec[i] << " ";
-        sum += vec[i];
+    cout << "please enter the length \n";
+    int length = 0;
+    cin >> length;
+    
+    vector<int> vec;
+    vec.reserve(length);
+    
+    cout << "then enter "<<length<<" nums" << endl;
+    for(int i=0;i<length;i++){
+        int a;
+        cin >> a;
+        vec.push_back(a);
     }
-    cout << sum << endl;
+    cout << "your enter: " ;
+    printVector(vec);
+    cout << "Sum is " << sumVector(vec) << endl;
     return 0;
 }
