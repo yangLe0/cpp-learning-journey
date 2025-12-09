@@ -1,0 +1,8 @@
+一个相加程序，python写界面，调用C++程序，C++接收参数后相加，输出结果
+
+终端命令：
+cmakepyc % cmake -S . -B build
+cmakepyc % cd build && make  
+build % cd ..
+可以用cp，复制sum_res到源文件所在目录
+cmakepyc % python3 show.py
