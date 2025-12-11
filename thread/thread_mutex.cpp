@@ -44,13 +44,34 @@ void ThreadMainMux(int i)
         this_thread::sleep_for(1ms);//留一点时间释放，让操作系统真的把资源释放掉，让排队线程交替处理
     }
 }
+timed_mutex tmux;//支持超时的互斥锁
+void ThreadMainTime(int i)
+{
+    for(;;)
+    {
+        if(!tmux.try_lock_for(chrono::milliseconds(600)))//超时多长时间500毫秒
+        {
+            cout <<i<<"[try_lock_for timeout]"<<endl;
+            continue;
+        }
+        cout <<i<<"[in]"<<endl;
+        this_thread::sleep_for(2000ms);
+        tmux.unlock();
+        this_thread::sleep_for(1ms);
+    }
+}
 int main(int argc, char* argv[])
 {
     for(int i=0;i<3;i++)
     {
+        thread th(ThreadMainTime,i+1);
+        th.detach();
+    }
+    getchar();
+    for(int i=0;i<3;i++)
+    {
         thread th(ThreadMainMux,i+1);
         th.detach();
-        
     }
     getchar();
     for(int i=0; i<10;i++)
