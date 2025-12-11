@@ -60,8 +60,40 @@ void ThreadMainTime(int i)
         this_thread::sleep_for(1ms);
     }
 }
+recursive_mutex rmux;//可重入的锁，普通锁第二次锁的时候会抛出异常，如果没有捕获异常程序就直接宕机了
+void Task1()
+{
+    rmux.lock();//把当前线程锁计数加一
+    cout<<"task1 [in]"<<endl;
+    rmux.unlock();//计数修正，直到变成0时真正释放
+}
+void Task2()
+{
+    rmux.lock();//如果已经锁住了不做处理
+    cout<<"task2 [in]"<<endl;
+    rmux.unlock();
+}
+void ThreadMainRec(int i)
+{
+    for(;;)
+    {
+        rmux.lock();
+        Task1();
+        cout<<i<<"[in]"<<endl;
+        this_thread::sleep_for(2000ms);
+        Task2();
+        rmux.unlock();
+        this_thread::sleep_for(1ms);
+    }
+}
 int main(int argc, char* argv[])
 {
+    for(int i=0;i<3;i++)
+    {
+        thread th(ThreadMainRec,i+1);
+        th.detach();
+    }
+    getchar();
     for(int i=0;i<3;i++)
     {
         thread th(ThreadMainTime,i+1);
