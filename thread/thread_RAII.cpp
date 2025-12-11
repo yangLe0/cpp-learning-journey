@@ -43,8 +43,38 @@ void TestMutex(int status)
         return;
     }
 }
+static mutex gmutex;
+void TestLockGuard(int i)
+{
+    gmutex.lock();
+    {
+        //已经拥有锁，不能lock
+        //lock_guard<mutex> lock(gmutex);//有lock
+        lock_guard<mutex> lock(gmutex, adopt_lock);//带个参数没有lock
+        //结束释放锁
+    }
+    {
+        lock_guard<mutex> lock(gmutex);
+        cout<<"begin thread"<<i<<endl;
+    }
+    
+    
+    for(;;)
+    {
+        {
+            lock_guard<mutex> lock(gmutex);
+            cout<<"In "<<i<<endl;
+        }
+        this_thread::sleep_for(500ms);
+    }
+}
 int main(int argc, char* argv[])
 {
+    for(int i=0;i<3;i++)
+    {
+        thread th(TestLockGuard,i+1);
+        th.detach();
+    }
     TestMutex(1);
     TestMutex(2);
     getchar();
