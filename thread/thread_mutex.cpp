@@ -1,0 +1,44 @@
+//
+//  thread_mutex.cpp
+//  test
+//
+//  Created by 天塌不惊 on 2025/12/11.
+//
+
+#include "thread"
+#include <iostream>
+#include <string>
+#include <mutex>
+//Linux -lpthread
+using namespace std;
+static mutex mux; //互斥变量
+void TestThread()
+{
+    for(;;)
+    {
+        //获取锁资源，如果没有则阻塞等待
+        //mux.lock();//操作系统层面的锁，只能有一个线程进入，这段代码称为临界区，保证临界区尽可能小，尽量晚锁
+        if(!mux.try_lock())//尝试去锁，没有获取到锁也做一些处理，监控到获取锁的过程，这行代码有开销
+        {//返回true是获取到锁了
+            cout<<"."<<flush;
+            this_thread::sleep_for(100ms);//每100ms去试图获取到锁，加这行给资源释放
+            continue;
+        }
+        cout << "===================" << endl;
+        cout << "test 001" << endl;
+        cout << "test 002" << endl;
+        cout << "test 003" << endl;
+        cout << "===================" << endl;
+        mux.unlock();//尽量早释放锁
+        this_thread::sleep_for(1000ms);
+    }
+}
+int main(int argc, char* argv[])
+{
+    for(int i=0; i<10;i++)
+    {
+        thread th(TestThread);
+        th.detach();
+    }
+    getchar();
+}
