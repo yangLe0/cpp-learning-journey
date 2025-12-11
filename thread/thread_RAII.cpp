@@ -70,6 +70,38 @@ void TestLockGuard(int i)
 }
 int main(int argc, char* argv[])
 {
+    {
+        static mutex mux;
+        {
+            unique_lock<mutex> lock(mux);//最基础用法
+            lock.unlock();//可以提前释放锁
+            //临时释放锁
+            lock.lock();//用完后再次锁住
+        }
+        {//参数设定三种：1、已经拥有锁 不锁定 退出栈区解锁
+            mux.lock();
+            unique_lock<mutex> lock(mux, adopt_lock);//确保之前已经锁住了，锁住的情况下我们还想用这个锁的时候
+        }
+        {//参数设定三种：2、延时占用锁
+            //延后加锁 不拥有 退出栈区不解锁
+            unique_lock<mutex> lock(mux, defer_lock);
+            //加锁 退出栈区解锁
+            lock.lock();
+        }
+        {//参数设定三种：3、
+            //mux.lock();
+            //尝试加锁 不阻塞 失败不拥有锁 退出栈区不解锁，成功的话拥有锁
+            unique_lock<mutex> lock(mux, try_to_lock);
+            //可以判断是否拥有锁
+            if(lock.owns_lock())
+            {
+                cout<<"owns_lock"<<endl;
+            }
+            else{
+                cout<<"not owns_lock"<<endl;
+            }
+        }
+    }
     for(int i=0;i<3;i++)
     {
         thread th(TestLockGuard,i+1);
