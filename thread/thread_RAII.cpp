@@ -68,8 +68,69 @@ void TestLockGuard(int i)
         this_thread::sleep_for(500ms);
     }
 }
+static mutex mux1;
+static mutex mux2;
+void TestScope1()
+{
+    //模拟死锁 停100ms等另一个线程锁mux2
+    this_thread::sleep_for(100ms);
+    cout << this_thread::get_id() << " begin mux1 lock"<<endl;
+    //mux1.lock();
+    cout << this_thread::get_id() << " begin mux2 lock"<<endl;
+    //mux2.lock();
+    //C++11
+    //lock(mux1,mux2);//两个锁同时锁住，才会进行下一步操作，如果没有锁住，会释放锁
+    //c++17
+    scoped_lock lock(mux1, mux2);//出了栈区会把两个锁释放掉，可以加多参数传递
+    cout << "TestScope1" << endl;
+    this_thread::sleep_for(1000ms);
+    //mux1.unlock();
+    //mux2.unlock();
+}
+void TestScope2()
+{
+    cout << this_thread::get_id() << " begin mux2 lock"<<endl;
+    mux2.lock();
+    this_thread::sleep_for(500ms);
+    cout << this_thread::get_id() << " begin mux1 lock"<<endl;
+    mux1.lock();//死锁
+    cout << "TestScope2" << endl;
+    this_thread::sleep_for(1500ms);
+    mux1.unlock();
+    mux2.unlock();
+}
 int main(int argc, char* argv[])
 {
+    {
+        //演示死锁情况
+        {
+            thread th(TestScope1);
+            th.detach();
+        }
+        {
+            thread th(TestScope2);
+            th.detach();
+        }
+        
+    }
+    getchar();
+    
+    {
+        //共享锁
+        static shared_timed_mutex tmux;
+        //读取锁 （共享锁）
+        {
+            //调用共享锁
+            shared_lock<shared_timed_mutex> lock(tmux);
+            cout << "read data" << endl;
+            //退出栈区 释放共享锁
+        }
+        //写入锁 （互斥锁）
+        {
+            unique_lock<shared_timed_mutex> lock(tmux);
+            cout << "write data" << endl;
+        }
+    }
     {
         static mutex mux;
         {
