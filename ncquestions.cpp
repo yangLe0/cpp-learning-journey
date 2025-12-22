@@ -17,6 +17,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <sstream> // 处理复杂分割必备
 using namespace std;
 bool isValid(string s){
     unordered_map<char, char> blacketmap = {
@@ -73,6 +74,151 @@ void UpOrLow(string& temp){
     }
     //cout<<"temp:"<<temp<<endl;
 }
+void stringchar(){
+    // 1. 空字符串
+    string s1;
+    s1 = "abc";
+    s1.assign("def");       // 清空s1并将其内容替换为括号里的，等价于 s1 = "def"
+    //cout <<s1<<endl; //def
+    s1.assign("ghijk", 3);  // 取前3个字符，s1 = "ghi"
+    //cout <<s1<<endl; //ghi
+    // 拼接（+= 是最常用方式）
+    s1 += "123";            // s1 = "ghi123"
+    s1.append("456");       // 等价于 +=，s1 = "ghi123456"
+    s1.push_back('7');      // 追加单个字符，s1 = "ghi1234567"
+    
+    // 2. 直接赋值字符串常量
+    string s2 = "Hello C++";
+    string s3("Hello World");
+    
+    // 3. 重复字符初始化（n个字符c）
+    string s4(5, 'a');  // s4 = "aaaaa"
+    
+    // 4. 从另一个string截取（起始位置pos，长度len）
+    string s5(s2, 0, 5);  // s5 = "Hello"（从s2的0位置取5个字符）
+    
+    // 5. 从字符数组初始化
+    char arr[] = "test";
+    string s6(arr);
+    
+    // 字符串拼接（两个string/字符串常量）
+    string s7 = s2 + " " + s3;  // s7 = "Hello C++ Hello World"
+    
+    // 方式1：[] 访问（无越界检查，速度快，访问越界会导致未定义行为（程序崩溃））
+    char c1 = s7[0];  // c1 = 'H'
+    s7[1] = 'B';      // s7 = "HBllo C++ Hello World"
+    
+    // 方式2：at() 访问（有越界检查，抛出异常，更安全，新手优先用 at()）
+    char c2 = s7.at(2);  // c2 = 'l'
+    //cout << s7.at(100);  // 越界，抛出 std::out_of_range 异常
+    
+    // 方式3：迭代器（遍历用）
+    for (string::iterator it = s7.begin(); it != s7.end(); ++it) {
+        cout << *it << " ";  // 输出：H B l l o   C + +   H e l l o   W o r l d
+    }
+    cout<<endl;
+    // 核心：获取有效字符数（常用）
+    int len1 = s7.size();    // len1 = 21
+    int len2 = s7.length();  // 等价于 size()，len2 = 21
+    
+    // 容量（已分配的内存能容纳的字符数，≥ size()）
+    int cap = s7.capacity();  // 随编译器不同，比如 22
+    
+    // 判空
+    bool is_empty = s7.empty();  // false 0
+    s7.clear();                  // 清空字符串，s 变为空
+    is_empty = s7.empty();       // true 1
+    
+    // 预留容量（减少内存重新分配，提升性能）大量字符串拼接时，优先用 reserve() 预留容量，避免频繁内存重分配
+    s7.reserve(100);  // 预分配能存100个字符的内存
+    
+    string s = "hello world, hello c++";
+    // 1. 查找字符串
+    size_t pos1 = s.find("hello");    // pos1 = 0（首次出现位置）
+    size_t pos2 = s.find("hello", 1); // 从位置1开始找，pos2 = 13
+    
+    // 2. 查找字符
+    size_t pos3 = s.find('w');        // pos3 = 6
+    
+    // 3. 反向查找（rfind）：从末尾找首次出现位置
+    size_t pos4 = s.rfind("hello");   // pos4 = 13
+    
+    // 4. 判读是否找到
+    if (s.find("java") == string::npos) {//找不到返回 string::npos（一个常量,无符号整数（size_t 类型），值为 -1，判断时不要用 == -1，直接用 == string::npos）
+        cout << "未找到 java" << endl;
+    }
+    
+    // 替换 replace(起始位置, 替换长度, 新字符串)
+    s.replace(6, 5, "C++");  // 从位置6开始，替换5个字符为"C++"
+    cout << s << endl;       // 输出：hello C++, hello c++
+    
+    // 插入：insert(起始位置, 插入内容)
+    s.insert(2, "123");  // 位置2插入"123"，s = "he123llo C++, hello c++"
+    
+    // 删除：erase(起始位置, 删除长度)
+    s.erase(2, 3);       // 从位置2删除3个字符，s 回到 "hello C++, hello c++"
+    
+    // 截取字符串 substr(起始位置, 截取长度)，长度省略则取到末尾
+    string sub1 = s.substr(6);    // 从位置6取到末尾，sub1 = "C++, hello c++"
+    string sub2 = s.substr(0, 5); // 从位置0取5个字符，sub2 = "hello"
+    
+    // 字符串与数值互转（C++11+ 推荐）
+    // 1）数值 → 字符串
+    // 方法1：to_string（支持int/float/double等）
+    int num = 123;
+    double d = 3.14;
+    string s8 = to_string(num);  // s1 = "123"
+    string s9 = to_string(d);    // s2 = "3.140000"
+    
+    // 2）字符串 → 数值
+    string s_num = "123";
+    string s_d = "3.14";
+    
+    // stoi/stol/stoll：转整数（int/long/long long）
+    num = stoi(s_num);         // num = 123
+    
+    // stof/stod/stold：转浮点数（float/double/long double）
+    d = stod(s_d);        // d = 3.14
+    
+    // 注意：字符串格式错误会抛异常，比如 stoi("abc") → 抛出 std::invalid_argument
+    
+    // 字符串比较 支持直接用 ==/!=/>/< 等运算符（按 ASCII 码逐字符比较）
+    s1 = "abc";
+    s2 = "abd";
+    s3 = "abc";
+    
+    cout << (s1 == s3) << endl;  // 1（true）
+    cout << (s1 < s2) << endl;   // 1（true，'c' < 'd'）
+    cout << (s1 > "aaa") << endl;// 1（true）
+    
+    // 也可用 compare 方法（返回0:相等; <0:s1<s2; >0:s1>s2）
+    int res = s1.compare(s2);   // res = -1
+    
+    // 与 C 语言字符数组互转
+    s = "hello";
+    // string → char*（c_str() 返回 const char*，不可修改）
+    const char* arr1 = s.c_str();
+    // string → char*（data() C++17后可返回 char*，之前是 const char*）
+    const char* arr2 = s.data();
+    
+    // char* → string（直接赋值即可）
+    char arr3[] = "world";
+    s1 = arr3;
+}
+void stringchar2(){
+    // 1. 普通输入（遇空格/回车终止）
+    string s1;
+    cin >> s1; // 输入：hello world → s1 = "hello"
+    
+    // 2. 整行输入（含空格）
+    cin.ignore(); // 清空缓冲区（避免读取上一次的回车）
+    string s2;
+    getline(cin, s2); // 输入：hello world → s2 = "hello world"
+    
+    // 3. 输出（直接输出/拼接输出）
+    cout << s2 << endl; // 输出：hello world
+    cout << s2.substr(0, 5) + " C++" << endl; // 输出：hello C++
+}
 void questionOne(){
     int K;
     string strOrigin;
@@ -102,10 +248,164 @@ void questionOne(){
         cout<<"-"<<ele;
     }
 }
+vector<string> split(const string&s ,char delimiter){
+    vector<string> res;
+    string temp;
+    for(char c:s){// 范围for遍历（简洁高效）
+        if(c!=delimiter){
+            temp+=c;
+        }else{
+            if(!temp.empty()){// 避免空串（如连续分隔符）
+                res.push_back(temp);
+                temp.clear();
+            }
+        }
+    }
+    if(!temp.empty()){// 处理最后一个子串
+        res.push_back(temp);
+    }
+    return res;
+}
+void test(){
+    string s = "123,456,789";
+    vector<string> parts = split(s, ',');
+    for (string part : parts) {
+        cout << part << endl; // 输出：123 456 789
+    }
+}
+// 统计字符频次（ASCII字符，用数组更高效）
+void count_chars(const string& s){
+    int count[128] = {0};// ASCII码范围0-127，初始化为0
+    for(char c:s){
+        count[(int)c]++;// 字符转ASCII码作为下标
+    }
+    for(int i=0;i<128;i++){
+        if(count[i]>0){
+            cout<<(char)i<<": "<<count[i]<<endl;
+        }
+    }
+}
+// 1. 反转字符串（两种方法）
+string reverse_str(string s){
+    // 方法1：用algorithm的reverse
+    //reverse(s.begin(),s.end());
+    // 方法2：手动反转（理解原理）
+    int left=0,right=s.size()-1;
+    while(left<right){
+        swap(s[left],s[right]);
+        left++;
+        right--;
+    }
+    return s;
+}
+// 2. 判断回文字符串（忽略大小写/空格)
+bool is_palindrome(string s){
+    // 预处理：转小写 + 去掉非字母数字（可选)
+    string temp;
+    for(char c:s){
+        if(isalnum(c)){// 判断是否为字母/数字
+            temp += tolower(c);// 转小写
+        }
+    }
+    // 双指针判断
+    int left=0,right=temp.size()-1;
+    while(left<right){
+        if(temp[left]!=temp[right]){
+            return false;
+        }
+        left++;
+        right--;
+    }
+    return true;
+}
+// 替换所有指定子串
+string replace_all(string s,const string& old_str,const string& new_str){
+    size_t pos = 0;
+    while((pos=s.find(old_str,pos))!=string::npos){
+        s.replace(pos,old_str.size(),new_str);
+        pos+=new_str.size();// 跳过新替换的内容，避免重复替换
+    }
+    return s;
+}
+void test2(){
+    //string s = "abacb";
+    //count_chars(s);// 测试：输入 "abacb" → a:2, b:2, c:1
+    //cout << reverse_str("hello") << endl; // 输出：olleh
+    //cout << is_palindrome("A man, a plan, a canal: Panama") << endl; // 输出：1（true）
+    // 1. 数值转字符串
+    int a = 123;
+    double b = 3.1415;
+    string sa = to_string(a);
+    string sb = to_string(b);
+    // 2. 字符串转数值（处理异常）
+    string s1 = "456";
+    string s2 = "78.9";
+    int num1 = stoi(s1);
+    double num2 = stod(s2);
+    // 3. 实战：字符串分割后求和
+    string s = "10,20,30,40";
+    vector<string> parts = split(s,',');
+    int sum=0;
+    for(string part:parts){
+        sum+=stoi(part);
+    }
+    cout<<sum<<endl;
+    s = "abc123abc456abc";
+    string res = replace_all(s, "abc", "xyz");
+    cout << res << endl; // 输出：xyz123xyz456xyz
+}
+void test3(){
+    // 1. 处理多行输入（直到EOF)
+    string line;
+    vector<string> lines;
+    while(getline(cin,line)){// 按行读取，直到Ctrl+D（Linux）/Ctrl+Z（Windows）
+        if(line.empty())// 空行终止
+            break;
+        lines.push_back(line);
+    }
+    // 2. 处理超长字符串（避免内存问题）
+    string long_str;
+    long_str.reserve(100000); // 预分配10万字符空间，避免频繁扩容
+    //cin >> long_str;
+    // 3. 混合分隔符分割（如空格+逗号，用stringstream）
+    string mix_str = "123,456 789|000";
+    stringstream ss(mix_str);
+    string token;
+    while(getline(ss,token,',')){
+        stringstream ss2(token);
+        string sub_token;
+        while (getline(ss2,sub_token,' ')) {
+            cout<<sub_token<<" ";
+        }
+    }
+}
+// 通用Trim函数（去除首尾指定字符，默认空格/制表符）
+string trim(const string&s, const string& chars=" \t\n\r"){
+    size_t start = s.find_first_not_of(chars);
+    if (start == string::npos) {
+        return "";
+    }
+    size_t end = s.find_last_not_of(chars);
+    cout << "start:"<<start<<endl;
+    cout << "end:"<<end<<endl;
+    return s.substr(start,end-start-1);
+}
+void test4(){
+    string s = "  abc 123,,  ";// 测试：输入 "  abc 123,,  " → 输出 "abc 123,,"
+    cout << trim(s) << endl;
+    // 去除首尾逗号：trim(s, ", ") → 输出 "abc 123"
+    cout << trim(s, ", ") << endl;
+}
 int main(){
     //string s1 = "()[]{}";
     //cout << "测试用例1 \"" << s1 << "\": " << (isValid(s1) ? "有效" : "无效") << endl;
     //3 12abc-abCABc-4aB@
-    questionOne();
+    //questionOne();
+    //stringchar();
+    //stringchar2();
+    //test();
+    //test2();
+    //test3();//输入
+    test4();
     return 0;
 }
