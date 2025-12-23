@@ -380,21 +380,192 @@ void test3(){
     }
 }
 // 通用Trim函数（去除首尾指定字符，默认空格/制表符）
-string trim(const string&s, const string& chars=" \t\n\r"){
+string trim(const string& s, const string& chars = " \t\n\r") {
+    // 1. 找到第一个不在chars里的字符的位置（跳过开头的指定字符）
     size_t start = s.find_first_not_of(chars);
+    // 如果整个字符串都是要去除的字符，返回空字符串
     if (start == string::npos) {
         return "";
     }
+    // 2. 找到最后一个不在chars里的字符的位置（跳过结尾的指定字符）
     size_t end = s.find_last_not_of(chars);
-    cout << "start:"<<start<<endl;
-    cout << "end:"<<end<<endl;
-    return s.substr(start,end-start-1);
+    
+    // 调试输出（可以删掉，仅用于看过程）
+    cout << "原字符串s: \"" << s << "\"" << endl;
+    cout << "第一个有效字符位置start: " << start << endl;
+    cout << "最后一个有效字符位置end: " << end << endl;
+    
+    // 3. 截取从start开始，长度为 (end - start + 1) 的子串
+    // 错误点：原代码是 end - start - 1，会少截最后一个字符
+    return s.substr(start, end - start + 1);
 }
 void test4(){
     string s = "  abc 123,,  ";// 测试：输入 "  abc 123,,  " → 输出 "abc 123,,"
     cout << trim(s) << endl;
     // 去除首尾逗号：trim(s, ", ") → 输出 "abc 123"
     cout << trim(s, ", ") << endl;
+}
+// 1. 字符串压缩（统计连续字符频次）
+string compress_str(const string& s){
+    if(s.empty())return "";
+    string res;
+    res.reserve(s.size());
+    char cur=s[0];
+    int count=1;
+    for(int i=1;i<s.size();i++){
+        if(s[i]==cur){
+            count++;
+        }else{
+            res+=cur+to_string(count);
+            cur=s[i];
+            count=1;
+        }
+    }
+    cout<<res<<endl;
+    res+=cur+to_string(count);
+    return res;
+}
+// 2. 字符串解压缩（数字可能多位，如"a10b2"→"aaaaaaaaaabb"）
+string decompress_str(const string & s){
+    string res;
+    string num_str;
+    for(char c:s){
+        if (isalpha(c)) {// 字母
+            if (!num_str.empty()) {// 有数字待处理
+                int num = stoi(num_str);
+                res.append(num-1,res.back());// 重复最后一个字符
+                num_str.clear();
+            }
+            res+=c;
+        }else if(isdigit(c)){// 数字（支持多位）
+            num_str+=c;
+        }
+    }
+    if(!num_str.empty())
+        res.append(stoi(num_str)-1,res.back());// 减1是因为字母已加过1次
+    return  res;
+}
+void test5(){
+    string s1 = "aaabbc";
+    cout << compress_str(s1) << endl; // 输出：a3b2c1
+    string s2 = "a10b2";
+    cout << decompress_str(s2) << endl; // 输出：aaaaaaaaaabb
+    string s3 = "a3b2c1";
+    cout << decompress_str(s3) << endl; // 输出：aaabbc
+    string s4 = "aaaa";
+    cout << compress_str(s4) << endl; // 输出：a4
+    string s5 = "ab";
+    cout << compress_str(s5) << endl; // 输出：a1b1
+}
+int length_of_longest_substring(const string& str){
+    if (str.empty()) {
+        return 0;
+    }
+    char count[127]={0};
+    int left=0,maxlen=0;
+    for (int right=0;right<str.size();right++) {
+        char c = str[right];
+        cout << "c:"<<c<<endl;
+        if(left<count[(int)c]){
+            left=count[(int)c];
+        }
+        cout<<"count[c]:"<<count[(int)c]<<endl;
+        cout<<"left:"<<left<<endl;
+        count[(int)c]=right+1;
+        cout<<"count[c]:"<<count[(int)c]<<endl;
+        cout<<"right+1:"<<right+1<<endl;
+        maxlen=max(maxlen,right-left+1);
+    }
+    return maxlen;
+}
+void test6(){
+    cout << length_of_longest_substring("abcabcbb") << endl; // 3
+    cout << length_of_longest_substring("bbbbb") << endl;    // 1
+    cout << length_of_longest_substring("pwwkew") << endl;   // 3
+}
+bool check_password(const string& password){
+    if (password.size()<8) {
+        return false;
+    }
+    bool has_lower=false,has_upper=false,has_digit=false,has_special=false;
+    string speicalStr = "!@#$%^&*";
+    for(int i=0;i<password.size();i++){
+        if (i>0&&password[i]==password[i-1]) {
+            return false;
+        }
+        if (isupper(password[i])) {
+            has_upper=true;
+        }else if(islower(password[i])){
+            has_lower=true;
+        }else if(isdigit(password[i])){
+            has_digit=true;
+        }else if (speicalStr.find(password[i])!=string::npos){
+            has_special=true;
+        }else{
+            return false;
+        }
+    }
+    return has_lower&&has_digit&&has_upper&&has_special;
+}
+void test7(){
+    cout << check_password("Abc123!@") << endl;    // 1（合法）
+    cout << check_password("abc123!@") << endl;    // 0（无大写）
+    cout << check_password("Abc123!!") << endl;    // 0（连续重复）
+}
+// 生成next数组（部分匹配表）
+vector<int> getNext(const string& pattern) {
+    int m = pattern.size();
+    vector<int> next(m, 0);
+    int j = 0; // 前缀指针
+
+    for (int i = 1; i < m; ++i) {
+        // 不匹配时，回退j到next[j-1]
+        while (j > 0 && pattern[i] != pattern[j]) {
+            j = next[j - 1];
+        }
+        // 匹配时，j前进，更新next[i]
+        if (pattern[i] == pattern[j]) {
+            j++;
+            next[i] = j;
+        }
+    }
+    return next;
+}
+
+// KMP匹配：返回模式串在文本串中首次出现的起始索引，未找到返回-1
+int kmpSearch(const string& text, const string& pattern) {
+    int n = text.size();
+    int m = pattern.size();
+    if (m == 0) return 0;
+
+    vector<int> next = getNext(pattern);
+    int j = 0; // 模式串指针
+
+    for (int i = 0; i < n; ++i) { // i是文本串指针
+        // 匹配失败，根据next数组回退j
+        while (j > 0 && text[i] != pattern[j]) {
+            j = next[j - 1];
+        }
+        // 匹配成功，j前进
+        if (text[i] == pattern[j]) {
+            j++;
+        }
+        // 模式串完全匹配，返回起始索引
+        if (j == m) {
+            return i - m + 1;
+        }
+    }
+    return -1; // 未找到
+}
+void test8(){
+    string text = "ababcabcacbab";
+        string pattern = "abcac";
+        int index = kmpSearch(text, pattern);
+        if (index != -1) {
+            cout << "模式串在文本串中起始位置：" << index << endl; // 输出5
+        } else {
+            cout << "未找到模式串" << endl;
+        }
 }
 int main(){
     //string s1 = "()[]{}";
@@ -406,6 +577,10 @@ int main(){
     //test();
     //test2();
     //test3();//输入
-    test4();
+    //test4();//字符串 Trim（去除首尾空格 / 特殊字符)
+    //test5();//字符串压缩 / 解压缩
+    //test6();//子序列 / 最长无重复子串
+    test7();//多条件字符串校验
+    test8();//kmp
     return 0;
 }
